@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <string.h>
 
 #define ALIGNMENT 16 /**< The alignment of the memory blocks */
@@ -236,7 +237,17 @@ void *tumalloc(size_t size) {
  * @return A pointer to the requested block of initialized memory
  */
 void *tucalloc(size_t num, size_t size) {
-    return NULL;
+    // Check for overflow
+    if (num > SIZE_MAX / size) {
+        return NULL;
+    }
+
+    size_t total_size = num * size;
+    void *ptr = tumalloc(total_size);
+    if (ptr != NULL) {
+        memset(ptr, 0, total_size);
+    }
+    return ptr;
 }
 
 /**
