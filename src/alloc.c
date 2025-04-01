@@ -164,6 +164,10 @@ static free_block *next_fit_ptr = NULL;
  * @return A pointer to the requested block of memory
  */
 void *tumalloc(size_t size) {
+    
+    printf("Allocating %d bytes\n", size);
+    printf("Next fit ptr: %p\n", next_fit_ptr);
+
     //align size
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
 
@@ -185,7 +189,29 @@ void *tumalloc(size_t size) {
             }
 
             next_fit_ptr = curr->next ? curr->next : HEAD;
-            
+
+            printf("allocated memory: %p\n", (void*)(curr + 1));
+            return (void*)(curr + 1);
+        }
+
+        prev = curr;
+        curr = curr->next;
+    }
+
+    free_block *new_block = (free_block *)sbrk(size + sizeof(free_block));
+    if (new_block == (void *)-1) {
+        printf("Failed to allocate memory\n");
+        return NULL;
+    }
+
+    new_block->size = size;
+    new_block->next = HEAD;
+
+    next_fit_ptr = NULL;
+
+    printf("allocated memory: %p\n", (void*)(new_block + 1));
+    return (void*)(new_block + 1);
+
 }
 
 /**
