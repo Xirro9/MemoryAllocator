@@ -137,8 +137,25 @@ void *coalesce(free_block *block) {
  * @return A pointer to the allocated memory
  */
 void *do_alloc(size_t size) {
-    return NULL;
+    void *block = sbrk(size + sizeof(free_block));
+    if (block == (void *)-1) {
+        return NULL;
+    }
+    
+    free_block *new_block = (free_block *)block;
+    new_block->size = size;
+    new_block->next = HEAD;
+    HEAD = new_block;
+
+    HEAD = (free_block *)coalesce(HEAD);
+
+    return (void *)((char *)new_block + sizeof(free_block));
 }
+
+// extra cred: this is the pointer to the last allocated block
+static free_block *next_fit_ptr = NULL;
+
+
 
 /**
  * Allocates memory for the end user
@@ -147,7 +164,28 @@ void *do_alloc(size_t size) {
  * @return A pointer to the requested block of memory
  */
 void *tumalloc(size_t size) {
-    return NULL;
+    //align size
+    size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
+
+    //next, start frmo next fit pointer
+    free_block *curr = next_fit_ptr ? next_fit_ptr : HEAD;
+    free_block *prev = NULL;
+
+    while (curr != NULL) {
+        if (curr->size >= size) {
+            //split block
+            if (curr->size > size + sizeof(free_block)) {
+                split(curr, size);
+            }
+            
+            if(prev != NULL) {
+                prev->next = curr->next;
+            } else {
+                HEAD = curr->next;
+            }
+
+            next_fit_ptr = curr->next ? curr->next : HEAD;
+            
 }
 
 /**
