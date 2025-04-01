@@ -237,16 +237,25 @@ void *tumalloc(size_t size) {
  * @return A pointer to the requested block of initialized memory
  */
 void *tucalloc(size_t num, size_t size) {
-    // Check for overflow
+    // Check for overflow to prevent multiplication from wrapping around
     if (num > SIZE_MAX / size) {
+        // If overflow would occur, return NULL to indicate failure
         return NULL;
     }
 
+    // Calculate the total size of the memory to be allocated
     size_t total_size = num * size;
+
+    // Allocate the memory using tumalloc
     void *ptr = tumalloc(total_size);
+
+    // Check if the allocation was successful
     if (ptr != NULL) {
+        // Initialize the allocated memory to zero using memset
         memset(ptr, 0, total_size);
     }
+
+    // Return the pointer to the allocated and initialized memory
     return ptr;
 }
 
@@ -258,7 +267,23 @@ void *tucalloc(size_t num, size_t size) {
  * @return A new pointer containing the contents of ptr, but with the new_size
  */
 void *turealloc(void *ptr, size_t new_size) {
-    return NULL;
+    if(!ptr) {
+        return tumalloc(new_size);
+    }
+
+    free_block *block = (free_block *)ptr - 1;
+
+    if (block->size >= new_size) {
+        return ptr;
+    }
+
+    void *new_ptr = tumalloc(new_size);
+    if(new_ptr) {
+        memcpy(new_ptr, ptr, block->size);
+        tufree(ptr);
+    }
+
+    return new_ptr;
 }
 
 /**
