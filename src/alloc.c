@@ -267,22 +267,30 @@ void *tucalloc(size_t num, size_t size) {
  * @return A new pointer containing the contents of ptr, but with the new_size
  */
 void *turealloc(void *ptr, size_t new_size) {
-    if(!ptr) {
+    // If the original pointer is NULL, allocate a new block of memory
+    if (!ptr) {
         return tumalloc(new_size);
     }
 
+    // Get the free_block struct that precedes the original pointer
     free_block *block = (free_block *)ptr - 1;
 
+    // If the original block is large enough, return the original pointer
     if (block->size >= new_size) {
         return ptr;
     }
 
+    // Allocate a new block of memory of the specified size
     void *new_ptr = tumalloc(new_size);
-    if(new_ptr) {
+
+    // If the allocation was successful, copy the contents of the original block to the new block
+    if (new_ptr) {
         memcpy(new_ptr, ptr, block->size);
+        // Free the original block
         tufree(ptr);
     }
 
+    // Return the new pointer
     return new_ptr;
 }
 
