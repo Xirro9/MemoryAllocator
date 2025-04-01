@@ -164,54 +164,68 @@ static free_block *next_fit_ptr = NULL;
  * @return A pointer to the requested block of memory
  */
 void *tumalloc(size_t size) {
-    
+    // Print debug information
     printf("Allocating %d bytes\n", size);
     printf("Next fit ptr: %p\n", next_fit_ptr);
 
-    //align size
+    // Align the size to the nearest multiple of ALIGNMENT
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
 
-    //next, start frmo next fit pointer
+    // Start searching for a free block from the next fit pointer
     free_block *curr = next_fit_ptr ? next_fit_ptr : HEAD;
     free_block *prev = NULL;
 
+    // Traverse the free list to find a block that fits the requested size
     while (curr != NULL) {
+        // Check if the current block is large enough
         if (curr->size >= size) {
-            //split block
+            // Split the block if it's larger than the requested size
             if (curr->size > size + sizeof(free_block)) {
                 split(curr, size);
             }
-            
-            if(prev != NULL) {
+
+            // Remove the block from the free list
+            if (prev != NULL) {
                 prev->next = curr->next;
             } else {
                 HEAD = curr->next;
             }
 
+            // Update the next fit pointer
             next_fit_ptr = curr->next ? curr->next : HEAD;
 
-            printf("allocated memory: %p\n", (void*)(curr + 1));
-            return (void*)(curr + 1);
+            // Print debug information
+            printf("allocated memory: %p\n", (void *)(curr + 1));
+
+            // Return the allocated memory
+            return (void *)(curr + 1);
         }
 
+        // Move to the next block in the free list
         prev = curr;
         curr = curr->next;
     }
 
+    // If no free block is found, allocate new memory from the OS
     free_block *new_block = (free_block *)sbrk(size + sizeof(free_block));
     if (new_block == (void *)-1) {
+        // Print error message if allocation fails
         printf("Failed to allocate memory\n");
         return NULL;
     }
 
+    // Initialize the new block
     new_block->size = size;
     new_block->next = HEAD;
 
+    // Reset the next fit pointer
     next_fit_ptr = NULL;
 
-    printf("allocated memory: %p\n", (void*)(new_block + 1));
-    return (void*)(new_block + 1);
+    // Print debug information
+    printf("allocated memory: %p\n", (void *)(new_block + 1));
 
+    // Return the allocated memory
+    return (void *)(new_block + 1);
 }
 
 /**
