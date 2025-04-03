@@ -300,24 +300,21 @@ void *turealloc(void *ptr, size_t new_size) {
  * @param ptr Pointer to the allocated piece of memory
  */
 void tufree(void *ptr) {
-    // Print debug information
+    // Print freed memory address
     printf("freed memory: %p\n", ptr);
 
-    // If the pointer is NULL, there's nothing to free
+    // Check if pointer is NULL
     if (!ptr) {
         return;
     }
 
-    // Get the free_block struct that precedes the original pointer
+    // Get free_block struct
     free_block *block = (free_block *)ptr - 1;
 
-    // Add the freed block to the beginning of the free list
+    // Add block to free list
     block->next = HEAD;
     HEAD = block;
 
-    // Coalesce adjacent free blocks to reduce memory fragmentation
-    HEAD = (free_block *)coalesce(HEAD);
-
-    // Print debug information
+    // Print completion message
     printf("Free operation complete: %p\n", ptr);
 }
